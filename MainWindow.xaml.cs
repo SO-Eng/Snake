@@ -30,7 +30,7 @@ namespace Snake
         // fuer die Breite der Spielfeldbegrenzung
         int pillarWidth;
         // Bewegungsgeschwindigkeit
-        int moveTime = 250;
+        int moveTime = 150;
 
         // Liste fuer die Schlange
         List<SnakeParts> snake;
@@ -151,7 +151,7 @@ namespace Snake
             // die Teile in einer Schleife bewegen
             for (int index = 1; index < snake.Count; index++)
             {
-                snake[index].SetPosition(snake[index - 1].OldPosition);
+                snake[index].SetPosition(snake[index - 1].GetOldPosition());
                 snake[index].Draw(playground);
             }
             // Kollision pruefen
@@ -162,28 +162,28 @@ namespace Snake
         // zum pruefen einer kollision mit dem Schlangenkopf
         private void ProofCollision()
         {
-            HitTestResult hitted = VisualTreeHelper.HitTest(playground, snake[0].Position);
+            HitTestResult hitted = VisualTreeHelper.HitTest(playground, snake[0].GetPosition());
             if (hitted != null)
             {
                 string name = ((Shape)hitted.VisualHit).Name;
                 // was haben wir getroffen?
+                if (name == "Border" || name == "Snake")
+                {
+                    timerSnake.Stop();
+                    playTime.Stop();
+                }
                 if (name == "Collision" || name == "Apple")
                 {
                     points += 10;
                     showPoints.Content = points;
                     // einen teil hinten in der Schlange anhaengen
-                    SnakeParts sPart = new SnakeParts(new Point(snake[snake.Count - 1].OldPosition.X, snake[snake.Count - 1].OldPosition.Y + snake[snake.Count - 1].Size), Colors.Black);
+                    SnakeParts sPart = new SnakeParts(new Point(snake[snake.Count - 1].GetOldPosition().X, snake[snake.Count - 1].GetOldPosition().Y + snake[snake.Count - 1].GetSize()), Colors.Black);
                     snake.Add(sPart);
                     // den alten Apfel loeschen
                     myApple.RemoveApple(playground);
                     // einen neuen Apfel erzeugen
                     myApple = new Apples(Colors.Green, 20);
                     myApple.ShowApple(playground, pillarWidth);
-                }
-                if (name == "Border") // || name == "Snake"
-                {
-                    timerSnake.Stop();
-                    playTime.Stop();
                 }
             }
         }

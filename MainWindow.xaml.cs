@@ -30,13 +30,17 @@ namespace Snake
         // fuer die Breite der Spielfeldbegrenzung
         int pillarWidth;
         // Bewegungsgeschwindigkeit
-        int moveTime = 1000;
+        int moveTime = 250;
 
         // Liste fuer die Schlange
         List<SnakeParts> snake;
 
         // Timer fuer die Schlangenbewegung
         DispatcherTimer timerSnake;
+        DispatcherTimer playTime;
+
+        // Klasse Apples bekannt machen
+        Apples myApple;
 
         #endregion
 
@@ -60,6 +64,18 @@ namespace Snake
             timerSnake.Tick += new EventHandler(Timer_MoveSnake);
             // den Timer starten
             timerSnake.Start();
+
+            playTime = new DispatcherTimer();
+            playTime.Interval = TimeSpan.FromMilliseconds(1000);
+            playTime.Tick += new EventHandler(Timer_Playtime);
+            playTime.Start();
+
+        }
+
+        private void Timer_Playtime(object sender, EventArgs e)
+        {
+            time += 1;
+            showTime.Content = time;
         }
 
         private void MenuItem_Click(object sender, RoutedEventArgs e)
@@ -88,12 +104,9 @@ namespace Snake
             // in die Liste setzen
             snake.Add(mySnakeHead);
 
-            // zum Test ein paar Teile erzeugen
-            for (int index = 0; index < 10; index++)
-            {
-                SnakeParts sPart = new SnakeParts(new Point(snake[index].OldPosition.X, snake[index].OldPosition.Y + snake[index].Size), Colors.Black);
-                snake.Add(sPart);
-            }
+
+            myApple = new Apples(Colors.Green, 20);
+            myApple.ShowApple(playground, pillarWidth);
         }
 
 
@@ -102,6 +115,7 @@ namespace Snake
         {
             // einen Balken erzeugen
             Rectangle pillar = new Rectangle();
+            pillar.Name = "Border";
             Canvas.SetLeft(pillar, position.X);
             Canvas.SetTop(pillar, position.Y);
             pillar.Width = width;
@@ -140,8 +154,65 @@ namespace Snake
                 snake[index].SetPosition(snake[index - 1].OldPosition);
                 snake[index].Draw(playground);
             }
+            // Kollision pruefen
+            ProofCollision();
+        }
+
+
+        // zum pruefen einer kollision mit dem Schlangenkopf
+        private void ProofCollision()
+        {
+            HitTestResult hitted = VisualTreeHelper.HitTest(playground, snake[0].Position);
+            if (hitted != null)
+            {
+                string name = ((Shape)hitted.VisualHit).Name;
+                // was haben wir getroffen?
+                if (name == "Collision" || name == "Apple")
+                {
+                    points += 10;
+                    showPoints.Content = points;
+                    // einen teil hinten in der Schlange anhaengen
+                    SnakeParts sPart = new SnakeParts(new Point(snake[snake.Count - 1].OldPosition.X, snake[snake.Count - 1].OldPosition.Y + snake[snake.Count - 1].Size), Colors.Black);
+                    snake.Add(sPart);
+                    // den alten Apfel loeschen
+                    myApple.RemoveApple(playground);
+                    // einen neuen Apfel erzeugen
+                    myApple = new Apples(Colors.Green, 20);
+                    myApple.ShowApple(playground, pillarWidth);
+                }
+                if (name == "Border") // || name == "Snake"
+                {
+                    timerSnake.Stop();
+                    playTime.Stop();
+                }
+            }
         }
 
         #endregion
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            // je nach Taste die Richtung setzen
+            // oben
+            if (e.Key == Key.Up || e.Key == Key.W)
+            {
+                direction = 0;
+            }
+            // unten
+            if (e.Key == Key.Down || e.Key == Key.S)
+            {
+                direction = 2;
+            }
+            // links
+            if (e.Key == Key.Left || e.Key == Key.A)
+            {
+                direction = 3;
+            }
+            // rechts
+            if (e.Key == Key.Right || e.Key == Key.D)
+            {
+                direction = 1;
+            }
+        }
     }
 }

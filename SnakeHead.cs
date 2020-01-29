@@ -18,7 +18,6 @@ namespace Snake
         // Methode zum bewegen
         public override void Move(int direction)
         {
-            //base.Move(direction);
             // die alte Position speichern
             OldPosition = Position;
             // und veraendern
@@ -44,7 +43,10 @@ namespace Snake
         }
 
 
-        public override Point Position { get => base.Position; set => base.Position = value; }
+        public override Point GetPosition()
+        {
+            return new Point(Position.X + (Size / 2), Position.Y + (Size / 2));
+        }//set => base.Position = value;
 
 
         #endregion

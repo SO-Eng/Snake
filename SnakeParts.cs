@@ -62,6 +62,7 @@ namespace Snake
 
             // ein neues Rechteck erzeugen
             square = new Rectangle();
+            square.Name = "Snake";
         }
 
 
@@ -102,7 +103,10 @@ namespace Snake
             myCanvas.Children.Add(square);
         }
 
-        
+        public virtual Point GetPosition()
+        {
+            return _position;
+        }
 
         #endregion
 

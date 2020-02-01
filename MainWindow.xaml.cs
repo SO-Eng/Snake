@@ -24,23 +24,38 @@ namespace Snake
         #region Fields
         // Fields
         int points;
+        int addPoints;
         int time;
         // fuer die Richtung
         int direction;
         // fuer die Breite der Spielfeldbegrenzung
         int pillarWidth;
-        // Bewegungsgeschwindigkeit
-        int moveTime = 150;
+        // Geschwindigkeit der Schlange
+        int speedSnake;
+        int oldSpeedSnake;
+        // Doppelte Geschwindigkeitsabfrage
+        bool speedUp = false;
 
         // Liste fuer die Schlange
         List<SnakeParts> snake;
 
         // Timer fuer die Schlangenbewegung
         DispatcherTimer timerSnake;
-        DispatcherTimer playTime;
+        DispatcherTimer timerGametime;
 
         // Klasse Apples bekannt machen
         Apples myApple;
+
+        // Spiel pausert?
+        bool gameBreak;
+        bool gameStarted;
+
+        // Klasse Score instanzieren
+        Score gamePoints;
+
+        // Commands
+        public static RoutedCommand BreakKey { get; } = new RoutedCommand();
+        public static RoutedCommand NewGameKey { get; } = new RoutedCommand();
 
         #endregion
 
@@ -49,43 +64,68 @@ namespace Snake
         // Konstruktor
         public MainWindow()
         {
+            // Break fuer Splashscreen
+            //System.Threading.Thread.Sleep(2000);
+
             InitializeComponent();
 
-            pillarWidth = 25;
+            pillarWidth = 20;
+            speedSnake = 400;
 
             // Liste erzeugen
             snake = new List<SnakeParts>();
 
-            // die Instanz erzeugen
+            // Timer fuer die Schlangenbewegung
             timerSnake = new DispatcherTimer();
-            // das Intervall setzen
-            timerSnake.Interval = TimeSpan.FromMilliseconds(moveTime);
-            // die Methode fuer das Ereignis zuweisen
+            timerSnake.Interval = TimeSpan.FromMilliseconds(speedSnake);
             timerSnake.Tick += new EventHandler(Timer_MoveSnake);
-            // den Timer starten
-            timerSnake.Start();
 
-            playTime = new DispatcherTimer();
-            playTime.Interval = TimeSpan.FromMilliseconds(1000);
-            playTime.Tick += new EventHandler(Timer_Playtime);
-            playTime.Start();
+            // Timer fuer die Zeitanzeige
+            timerGametime = new DispatcherTimer();
+            timerGametime.Interval = TimeSpan.FromMilliseconds(1000);
+            timerGametime.Tick += new EventHandler(Timer_Playtime);
 
+            // Spiel zu beginn anhalten
+            gameBreak = true;
+            gameStarted = false;
+
+            // Einstellungen aktivieren
+            MenuEasy.IsEnabled = true;
+            MenuAvarage.IsEnabled = true;
+            MenuHeavy.IsEnabled = true;
+
+            // Mittel
+            addPoints = 10;
+
+            gamePoints = new Score();
         }
+
 
         private void Timer_Playtime(object sender, EventArgs e)
         {
             time += 1;
             showTime.Content = time;
+            // SpeedUp subtrahieren, wenn aktiv
+            if (speedUp)
+            {
+                ProgressBarSpeed.Value -= 1;
+            }
+            // Wenn 0 dann Schlange verlangsamen
+            if (ProgressBarSpeed.Value == 0 && speedUp)
+            {
+                speedSnake = oldSpeedSnake;
+                timerSnake.Interval = TimeSpan.FromMilliseconds(speedSnake);
+                speedUp = false;
+            }
         }
 
-        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        private void GameClose_Click(object sender, RoutedEventArgs e)
         {
             Close();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Start();
             DrawPlayground();
         }
 
@@ -93,11 +133,23 @@ namespace Snake
         // Methode fuer den Start des Spiels
         private void Start()
         {
+            // Geschwindigkeit setzen
+            speedSnake = 400;
+            timerSnake.Interval = TimeSpan.FromMilliseconds(speedSnake);
+            gameStarted = true;
+            gamePoints.LoeschePunkte();
+            // Liste leeren
+            snake.Clear();
+            // Spielfeld leeren
+            playground.Children.Clear();
+
             points = 0;
             time = 0;
             direction = 0;
             showPoints.Content = points;
             showTime.Content = time;
+
+            DrawPlayground();
 
             // den Schlangenkopf erzeugen und positionieren
             SnakeHead mySnakeHead = new SnakeHead(new Point(playground.ActualWidth / 2, playground.ActualHeight / 2), Colors.Red);
@@ -107,6 +159,12 @@ namespace Snake
 
             myApple = new Apples(Colors.Green, 20);
             myApple.ShowApple(playground, pillarWidth);
+
+            // Einstellungen deaktivieren
+            MenuEasy.IsEnabled = false;
+            MenuAvarage.IsEnabled = false;
+            MenuHeavy.IsEnabled = false;
+
         }
 
 
@@ -169,13 +227,26 @@ namespace Snake
                 // was haben wir getroffen?
                 if (name == "Border" || name == "Snake")
                 {
-                    timerSnake.Stop();
-                    playTime.Stop();
+                    EndGame();
                 }
                 if (name == "Collision" || name == "Apple")
                 {
-                    points += 10;
+                    points = gamePoints.VeraenderePunkte(addPoints);
                     showPoints.Content = points;
+                    // Geschwindigkeit der Schlange erhoehen, wenn nicht das Maximum schon erreicht ist
+                    if (points % 50 == 0 && speedSnake > 100)
+                    {
+                        speedSnake -= 100;
+                        timerSnake.Interval = TimeSpan.FromMilliseconds(speedSnake);
+                        if (speedUp)
+                        {
+                            oldSpeedSnake -= 100;
+                        }
+                    }
+                    if (points % 100 == 0)
+                    {
+                        ProgressBarSpeed.Value += 1;
+                    }
                     // einen teil hinten in der Schlange anhaengen
                     SnakeParts sPart = new SnakeParts(new Point(snake[snake.Count - 1].GetOldPosition().X, snake[snake.Count - 1].GetOldPosition().Y + snake[snake.Count - 1].GetSize()), Colors.Black);
                     snake.Add(sPart);
@@ -188,31 +259,285 @@ namespace Snake
             }
         }
 
-        #endregion
-
+        // Bewegung der Schlange
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
+            // Spiel pausiert? Tasten nicht annehmen!
+            if (gameBreak)
+            {
+                return;
+            }
             // je nach Taste die Richtung setzen
             // oben
-            if (e.Key == Key.Up || e.Key == Key.W)
+            if ((e.Key == Key.Up || e.Key == Key.W) && direction != 2)
             {
                 direction = 0;
             }
             // unten
-            if (e.Key == Key.Down || e.Key == Key.S)
+            if ((e.Key == Key.Down || e.Key == Key.S) && direction != 0)
             {
                 direction = 2;
             }
             // links
-            if (e.Key == Key.Left || e.Key == Key.A)
+            if ((e.Key == Key.Left || e.Key == Key.A) && direction != 1)
             {
                 direction = 3;
             }
             // rechts
-            if (e.Key == Key.Right || e.Key == Key.D)
+            if ((e.Key == Key.Right || e.Key == Key.D) && direction != 3)
             {
                 direction = 1;
             }
+            // SpeedUp Funktion
+            if (e.Key == Key.Space || e.Key == Key.LeftShift)
+            {
+                SpeedUp();
+            }
         }
+
+
+        // Methode um die Schlange auf das doppelte ihrer Geschwindigkeit zu bringen
+        private void SpeedUp()
+         {
+            if (ProgressBarSpeed.Value > 0 && !speedUp)
+            {
+                    oldSpeedSnake = speedSnake;
+                    speedSnake /= 2;
+                    timerSnake.Interval = TimeSpan.FromMilliseconds(speedSnake);
+                    speedUp = true;
+            }
+            else if (!speedUp)
+            {
+                return;
+            }
+            else
+            {
+                speedSnake = oldSpeedSnake;
+                timerSnake.Interval = TimeSpan.FromMilliseconds(speedSnake);
+                speedUp = false;
+            }
+        }
+
+
+        // erzeugt einen Dialog zum Neustart und liefert das Ergebnis zurueck
+        bool NewGame()
+        {
+            bool result = false;
+            // einen Dialog mit Ja/Nein erzeugen
+            MessageBoxResult question = MessageBox.Show("Wollen Sie ein neues Spiel starten?", "Neues Spiel", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            // wurde auf Ja geclickt?
+            if (question == MessageBoxResult.Yes)
+            {
+                // dann rufen wir die Methode zum Starten auf
+                Start();
+                result = true;
+            }
+            return result;
+        }
+
+
+        private void GameNewGame_Click(object sender, RoutedEventArgs e)
+        {
+            if (!gameBreak)
+            {
+                GameBreak();
+                // Dialog amzeigen
+                NewGame();
+                // und weiter spielen
+                GameBreak();
+            }
+            // wenn kein Spiel laeuft, starten wir ein neues Spiel, wenn Ja geclickt wurde
+            else
+            {
+                if (NewGame())
+                {
+                    GameBreak();
+                }
+            }
+        }
+
+        // Spiel pausieren
+        void GameBreak()
+        {
+            // lauft das Spiel?
+            if (!gameBreak)
+            {
+                // alle Timer anhalten
+                timerGametime.Stop();
+                timerSnake.Stop();
+
+                // die Markierung im Menue einschalten
+                GameBreakSwitch.IsChecked = true;
+
+                // Einstellungen aktivieren
+                MenuEasy.IsEnabled = true;
+                MenuAvarage.IsEnabled = true;
+                MenuHeavy.IsEnabled = true;
+
+                // den Text in der Titelleiste anpassen
+                Title = "Snake - Das Spiel ist pausiert!";
+                gameBreak = true;
+            }
+            else
+            {
+                // alle Timer weider starten
+                timerGametime.Start();
+                timerSnake.Start();
+
+                // die Markierung
+                GameBreakSwitch.IsChecked = false;
+
+                Title = "Snake";
+                gameBreak = false;
+            }
+        }
+
+        private void GameBreakSwitch_Click(object sender, RoutedEventArgs e)
+        {
+            GameBreak();
+        }
+
+
+        // Spiel beenden
+        void EndGame()
+        {
+            // das Spiel anhalten
+            GameBreak();
+            // eine Meldung anzeigen
+            MessageBox.Show("Schade", "Game Over!", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            // reicht es fuer einen neuen eintrg in der Betsenliste?
+            if (gamePoints.NeuerEintrag(this) == true)
+            {
+                gamePoints.NeuerEintrag(this);
+            }
+            // Abfrage ob ein neues Spiel gestartet werden soll
+            if (NewGame())
+            {
+                Start();
+                // das Spiel "fortsetzen"
+                GameBreak();
+            }
+            else
+            {
+                Close();
+            }
+        }
+
+        // Schwieriegkeitsgrad Einstellungen
+        private void MenuEasy_Click(object sender, RoutedEventArgs e)
+        {
+            // Markierung bei den anderen Eintraegen abschalten
+            MenuAvarage.IsChecked = false;
+            MenuHeavy.IsChecked = false;
+            SetSettings(1000, 800, 1);
+            ProgressBarSpeed.Height = 300;
+        }
+
+        private void MenuAvarage_Click(object sender, RoutedEventArgs e)
+        {
+            // Markierung bei den anderen Eintraegen abschalten
+            MenuEasy.IsChecked = false;
+            MenuHeavy.IsChecked = false;
+            SetSettings(800, 600, 10);
+            ProgressBarSpeed.Height = 300;
+        }
+
+        private void MenuHeavy_Click(object sender, RoutedEventArgs e)
+        {
+            // Markierung bei den anderen Eintraegen abschalten
+            MenuAvarage.IsChecked = false;
+            MenuEasy.IsChecked = false;
+            SetSettings(400, 300, 25);
+            ProgressBarSpeed.Height = 100;
+        }
+
+        void SetSettings(int width, int height, int pointsNew)
+        {
+            // die Groesse des Fensters setzen
+            Width = width;
+            Height = height;
+            addPoints = pointsNew;
+            // Fenster neu positionieren
+            Left = (SystemParameters.PrimaryScreenWidth - Width) / 2;
+            Top = (SystemParameters.PrimaryScreenHeight - Height) / 2;
+            // die Elemente im Spielfeld loeschen
+            playground.Children.Clear();
+            // das Spielfeld neu erstellen
+            DrawPlayground();
+        }
+
+
+        // Bestenliste anzeigen
+        private void GameLeaderBoard_Click(object sender, RoutedEventArgs e)
+        {
+            bool forward = false;
+
+            if (!gameBreak)
+            {
+                GameBreak();
+                forward = true;
+            }
+            // Betsenliste anzeigen
+            gamePoints.ListeAusgeben(this);
+            if (forward)
+            {
+                GameBreak();
+            }
+        }
+
+
+        // KeyBindings
+        private void Break_CanExecuted(object sender, CanExecuteRoutedEventArgs e)
+        {
+            // gibt es das Spielfeld und laeuft das Spiel?
+            if (playground != null && gameStarted)
+            {
+                e.CanExecute = true;
+            }
+        }
+
+        private void Break_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            // pauseiren?
+            GameBreak();
+        }
+
+
+        // KeyBindings
+        private void NewGame_CanExecuted(object sender, CanExecuteRoutedEventArgs e)
+        {
+            // Kann jedereit aufgerufen werden
+            if (playground != null)
+            {
+                e.CanExecute = true;
+            }
+        }
+
+        private void NewGame_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            // pauseiren?
+            if (!gameBreak)
+            {
+                GameBreak();
+                // Dialog amzeigen
+                NewGame();
+                // und weiter spielen
+                GameBreak();
+            }
+            // wenn kein Spiel laeuft, starten wir ein neues Spiel, wenn Ja geclickt wurde
+            else
+            {
+                if (NewGame())
+                {
+                    GameBreak();
+                }
+            }
+        }
+
+
+        #endregion
+
     }
 }

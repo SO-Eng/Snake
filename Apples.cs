@@ -18,6 +18,7 @@ namespace Snake
         // die Groesse
         int appleSize;
 
+
         #endregion
 
 
@@ -34,6 +35,7 @@ namespace Snake
             circle.Name = "Apple";
             squareCollision = new Rectangle();
             squareCollision.Name = "Collision";
+
         }
 
         
@@ -41,7 +43,7 @@ namespace Snake
         public void ShowApple(Canvas myCanvas, int pillarWidth)
         {
             // den Zufallsgenerator initialisieren
-            Random rnd = new Random(GetHashCode());
+            Random rnd = new Random();
             // das Minimum ist die Balkenbreite
             int min = pillarWidth;
             // das Maximum ermitteln
@@ -71,7 +73,6 @@ namespace Snake
             // hizufuegen
             myCanvas.Children.Add(squareCollision);
             myCanvas.Children.Add(circle);
-
         }
 
 

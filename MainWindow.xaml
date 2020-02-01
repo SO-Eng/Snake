@@ -5,20 +5,63 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Snake"
         mc:Ignorable="d"
-        Title="Snake" Height="600" Width="800" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Topmost="True" Loaded="Window_Loaded" KeyDown="Window_KeyDown">
-    <Grid Background="#FFBDBDBD">
+        Title="Snake" Height="650" Width="800" WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Topmost="True" Loaded="Window_Loaded" KeyDown="Window_KeyDown">
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static local:MainWindow.BreakKey}" CanExecute="Break_CanExecuted" Executed="Break_Executed"/>
+        <CommandBinding Command="{x:Static local:MainWindow.NewGameKey}" CanExecute="NewGame_CanExecuted" Executed="NewGame_Executed"/>
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Command="{x:Static local:MainWindow.BreakKey}" Key="P"/>
+        <KeyBinding Command="{x:Static local:MainWindow.NewGameKey}" Key="N"/>
+    </Window.InputBindings>
+    <Grid Background="#FF77A66C">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="50"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Menu Grid.Row="0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="50"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Menu Grid.Row="0" Grid.ColumnSpan="2">
             <MenuItem Header="_Spiel">
-                <MenuItem Header="_Beenden" Click="MenuItem_Click"/>
+                <MenuItem x:Name="GameNewGame" Header="_Neues Spiel" Command="{x:Static local:MainWindow.NewGameKey}"/>
+                <MenuItem x:Name="GameBreakSwitch" Header="_Pause" IsCheckable="True" Command="{x:Static local:MainWindow.BreakKey}"/>
+                <MenuItem x:Name="GameLeaderBoard" Header="Bestenliste" Click="GameLeaderBoard_Click"/>
+                <MenuItem x:Name="GameClose" Header="_Beenden" Click="GameClose_Click"/>
+            </MenuItem>
+            <MenuItem Header="_Einstellungen">
+                <MenuItem Header="Schwieriegkeitsgrad">
+                    <MenuItem x:Name="MenuEasy" Header="_Leicht" IsCheckable="True" Click="MenuEasy_Click"/>
+                    <MenuItem x:Name="MenuAvarage" Header="_Mittel" IsCheckable="True" IsChecked="True" Click="MenuAvarage_Click"/>
+                    <MenuItem x:Name="MenuHeavy" Header="_Schwer" IsCheckable="True" Click="MenuHeavy_Click"/>
+                </MenuItem>
             </MenuItem>
         </Menu>
-        <Canvas x:Name="playground" Grid.Row="1"/>
-        <Label x:Name="showPoints" Content="0" HorizontalContentAlignment="Right" FontSize="20" Margin="0,20,30,0" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Top"/>
-        <Label x:Name="showTime" Content="0" HorizontalContentAlignment="Right" FontSize="20" Margin="0,57,30,0" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Background="#FFBDBDBD">
+            <Grid>
+                <Label HorizontalAlignment="Center" Content="Lebensenergie:" VerticalAlignment="Center" Margin="0,15,275,0" FontWeight="Bold" FontSize="14" />
+                <ProgressBar x:Name="ProgressBarLife" Height="20" Width="150" Margin="0,15,0,0" Background="#FFDEDEDE" BorderBrush="Black" Maximum="3" SmallChange="1" Foreground="#FFFF5454"/>
+            </Grid>
+        </StackPanel>
+        <Grid Grid.Row="2" Grid.Column="0" Background="#FFBDBDBD">
+            <ProgressBar x:Name="ProgressBarSpeed" Foreground="#FF04DA2B" BorderBrush="Black" Maximum="10" SmallChange="1" Width="20" Height="300" HorizontalAlignment="Center" Orientation="Vertical"/>
+            <Label Content="SpeedUp" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5" HorizontalAlignment="Center" Width="62" Height="50" HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                <Label.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform/>
+                        <SkewTransform/>
+                        <RotateTransform Angle="270"/>
+                        <TranslateTransform/>
+                    </TransformGroup>
+                </Label.RenderTransform>
+            </Label>
+        </Grid>
+        <Canvas x:Name="playground" Grid.Row="2" Grid.Column="1"/>
+        <Label x:Name="showPoints" Content="0" HorizontalContentAlignment="Right" FontSize="20" Margin="0,20,30,0" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+        <Label x:Name="showTime" Content="0" HorizontalContentAlignment="Right" FontSize="20" Margin="0,57,30,0" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top"/>
 
     </Grid>
 </Window>

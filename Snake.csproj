@@ -56,8 +56,19 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Apples.cs" />
+    <Compile Include="Leaderboard.xaml.cs">
+      <DependentUpon>Leaderboard.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="NameDialog.xaml.cs">
+      <DependentUpon>NameDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Score.cs" />
     <Compile Include="SnakeHead.cs" />
     <Compile Include="SnakeParts.cs" />
+    <Page Include="Leaderboard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -70,6 +81,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="NameDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -96,6 +111,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <SplashScreen Include="splashscreen\snake.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

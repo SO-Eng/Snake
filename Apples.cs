@@ -9,7 +9,6 @@ namespace Snake
 {
     class Apples
     {
-
         #region Fields
         // die Farbe
         Color color;
@@ -20,6 +19,7 @@ namespace Snake
         int appleSize;
 
         private Canvas tempPlayground;
+        public Point circleCenter;
 
         #endregion
 
@@ -46,7 +46,7 @@ namespace Snake
         {
             tempPlayground = myCanvas;
             // den Zufallsgenerator initialisieren
-            Random rnd = new Random();
+            Random rnd = new Random(GetHashCode());
             // das Minimum ist die Balkenbreite
             int min = pillarWidth;
             // das Maximum ermitteln
@@ -68,28 +68,34 @@ namespace Snake
             squareCollision.Height = circle.Height + (appleSize - 1);
             // Farbe setzen
             filling = new SolidColorBrush(Colors.Aqua);
-            filling.Opacity = 0;
+            //filling.Opacity = 0;
             squareCollision.Fill = filling;
             Canvas.SetLeft(squareCollision, Canvas.GetLeft(circle) - ((appleSize - 1) / 2));
             Canvas.SetTop(squareCollision, Canvas.GetTop(circle) - ((appleSize - 1) / 2));
 
-            double topX = Canvas.GetTop(circle);
-            double topY = Canvas.GetLeft(circle);
+            double topX = Canvas.GetTop(squareCollision);
+            double topY = Canvas.GetLeft(squareCollision);
 
             // Kreismittelpunkt
-            Point circleCenter = new Point(topX + (circle.Height / 2), topY + (circle.Width / 2));
+            circleCenter = new Point(topX + (squareCollision.Height / 2), topY + (squareCollision.Width / 2));
 
             // hinzufuegen
             myCanvas.Children.Add(squareCollision);
             myCanvas.Children.Add(circle);
 
-            HitTestResult coll = VisualTreeHelper.HitTest(myCanvas, circleCenter);
+            HitTestResult coll = VisualTreeHelper.HitTest(tempPlayground, circleCenter);
             if (coll != null)
             {
-                MessageBox.Show("Getroffen!", "Apfel", MessageBoxButton.OK, MessageBoxImage.Warning);
-                RemoveApple(tempPlayground);
-                ShowApple(tempPlayground, pillarWidth);
+                string name = ((Shape)coll.VisualHit).Name;
+
+                if (name == "Hitbox" || name == "Barrier" || name == "Snake")
+                {
+                    MessageBox.Show(coll.VisualHit.ToString());
+                    RemoveApple(tempPlayground);
+                    ShowApple(tempPlayground, pillarWidth);
+                }
             }
+
         }
 
 
@@ -100,6 +106,10 @@ namespace Snake
             myCanvas.Children.Remove(circle);
         }
 
+        public Point GetPosition()
+        {
+            return circleCenter;
+        }
 
         #endregion
     }

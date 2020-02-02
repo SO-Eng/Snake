@@ -46,6 +46,7 @@ namespace Snake
 
         // Klasse Apples bekannt machen
         Apples myApple;
+        Barrier myBarrier;
 
         // Spiel pausert?
         bool gameBreak;
@@ -60,6 +61,8 @@ namespace Snake
 
         public Color BorderColor;
         private int _counterLevel;
+        // 10 = leicht; 5 = mittel; 2 = schwer
+        private int difficulty;
 
         #endregion
 
@@ -69,12 +72,12 @@ namespace Snake
         public MainWindow()
         {
             // Break fuer Splashscreen
-            //System.Threading.Thread.Sleep(2000);
+            System.Threading.Thread.Sleep(2000);
 
             InitializeComponent();
 
             pillarWidth = 20;
-            speedSnake = 400;
+            speedSnake = 500;
 
             // Liste erzeugen
             snake = new List<SnakeParts>();
@@ -100,10 +103,10 @@ namespace Snake
 
             // Mittel
             addPoints = 10;
+            difficulty = 6;
 
             gamePoints = new Score();
-
-            NextLevel(0);
+            
         }
 
 
@@ -133,6 +136,7 @@ namespace Snake
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             DrawPlayground();
+            NextLevel(0);
         }
 
 
@@ -140,10 +144,12 @@ namespace Snake
         private void Start()
         {
             // Geschwindigkeit setzen
-            speedSnake = 400;
+            speedSnake = 500;
             timerSnake.Interval = TimeSpan.FromMilliseconds(speedSnake);
             gameStarted = true;
             gamePoints.LoeschePunkte();
+            ProgressBarSpeed.Value = 0;
+            ProgressBarLife.Value = 3;
             // Liste leeren
             snake.Clear();
             // Spielfeld leeren
@@ -221,6 +227,7 @@ namespace Snake
         // zum pruefen einer kollision mit dem Schlangenkopf
         private void ProofCollision()
         {
+            //HitTestResult collAplle = VisualTreeHelper.HitTest(playground, myApple.GetPosition());
             HitTestResult hitted = VisualTreeHelper.HitTest(playground, snake[0].GetPosition());
             if (hitted != null)
             {
@@ -235,22 +242,18 @@ namespace Snake
                     points = gamePoints.VeraenderePunkte(addPoints);
                     showPoints.Content = points;
                     // Geschwindigkeit der Schlange erhoehen, wenn nicht das Maximum schon erreicht ist
-                    if (points % 50 == 0 && speedSnake > 100)
-                    {
-                        speedSnake -= 100;
-                        timerSnake.Interval = TimeSpan.FromMilliseconds(speedSnake);
-                        if (speedUp)
-                        {
-                            oldSpeedSnake -= 100;
-                        }
-                    }
+                    //if (points % 50 == 0 && speedSnake > 100)
+                    //{
+                    //    speedSnake -= 100;
+                    //    timerSnake.Interval = TimeSpan.FromMilliseconds(speedSnake);
+                    //    if (speedUp)
+                    //    {
+                    //        oldSpeedSnake -= 100;
+                    //    }
+                    //}
                     if (points % 100 == 0)
                     {
                         ProgressBarSpeed.Value += 1;
-                    }
-                    if (points >= 1000)
-                    {
-                        NextLevel(_counterLevel);
                     }
                     // einen teil hinten in der Schlange anhaengen
                     SnakeParts sPart = new SnakeParts(new Point(snake[snake.Count - 1].GetOldPosition().X, snake[snake.Count - 1].GetOldPosition().Y + snake[snake.Count - 1].GetSize()), Colors.Black);
@@ -260,8 +263,21 @@ namespace Snake
                     // einen neuen Apfel erzeugen
                     myApple = new Apples(Colors.Green, 25);
                     myApple.ShowApple(playground, pillarWidth);
+                    if (points >= 1000)
+                    {
+                        GameBreak();
+                        MessageBox.Show("Glückwunsch");
+                        NextLevel(_counterLevel);
+                    }
                 }
             }
+
+            //if (collAplle != null)
+            //{
+            //    myApple.RemoveApple(playground);
+            //    myApple = new Apples(Colors.Green, 25);
+            //    myApple.ShowApple(playground, pillarWidth);
+            //}
         }
 
         // Bewegung der Schlange
@@ -432,6 +448,7 @@ namespace Snake
             MenuHeavy.IsChecked = false;
             SetSettings(1000, 800, 1);
             ProgressBarSpeed.Height = 300;
+            difficulty = 11;
         }
 
         private void MenuAvarage_Click(object sender, RoutedEventArgs e)
@@ -441,6 +458,7 @@ namespace Snake
             MenuHeavy.IsChecked = false;
             SetSettings(800, 600, 10);
             ProgressBarSpeed.Height = 300;
+            difficulty = 6;
         }
 
         private void MenuHeavy_Click(object sender, RoutedEventArgs e)
@@ -450,6 +468,7 @@ namespace Snake
             MenuEasy.IsChecked = false;
             SetSettings(400, 300, 25);
             ProgressBarSpeed.Height = 100;
+            difficulty = 2;
         }
 
         void SetSettings(int width, int height, int pointsNew)
@@ -569,28 +588,31 @@ namespace Snake
             BorderColor = Colors.SaddleBrown;
             DrawPlayground();
             AddSnake();
-            // Hindernisse setzen
+            for (int i = 0; i < difficulty; i++)
+            {
+                myBarrier = new Barrier(Colors.BlueViolet, 35);
+                myBarrier.ShowBarrier(playground, pillarWidth);
+            }
         }
 
         private void SecondLevel()
         {
+            System.Threading.Thread.Sleep(1000);
             snake.Clear();
-            GameBreak();
             playground.Children.Clear();
-            // Label mit Nachricht setzen
-            System.Threading.Thread.Sleep(3000);
             AddSnake();
             myGrid.Background = new SolidColorBrush(Color.FromRgb(113, 136, 220));
             BorderColor = Color.FromRgb(106, 106, 106);
             DrawPlayground();
-            GameBreak();
-            // Hindernisse setzen
+            GameBreak(); 
+            for (int i = 0; i < difficulty; i++)
+            {
+                myBarrier = new Barrier(Colors.BlueViolet, 35);
+                myBarrier.ShowBarrier(playground, pillarWidth);
+            }
+            myApple.ShowApple(playground,pillarWidth);
         }
 
-        //public Canvas GetPlayground()
-        //{
-        //    return playground;
-        //}
         #endregion
 
     }

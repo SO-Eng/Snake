@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -13,13 +14,13 @@ namespace Snake
         // die Farbe
         Color color;
         // die Form
-        Ellipse circle;
+        public Ellipse circle;
         Rectangle squareCollision;
         // die Groesse
         int appleSize;
+        private bool collision = false;
 
-        private Canvas tempPlayground;
-        public Point circleCenter;
+        private Point circleCenter;
 
         #endregion
 
@@ -37,16 +38,14 @@ namespace Snake
             circle.Name = "Apple";
             squareCollision = new Rectangle();
             squareCollision.Name = "Collision";
-
         }
 
         
         // den Apfel anzeigen
         public void ShowApple(Canvas myCanvas, int pillarWidth)
         {
-            tempPlayground = myCanvas;
             // den Zufallsgenerator initialisieren
-            Random rnd = new Random(GetHashCode());
+            Random rnd = new Random();
             // das Minimum ist die Balkenbreite
             int min = pillarWidth;
             // das Maximum ermitteln
@@ -62,13 +61,14 @@ namespace Snake
             // Farben setzen
             SolidColorBrush filling = new SolidColorBrush(color);
             circle.Fill = filling;
+            circle.Opacity = 0;
 
             // den Dummy fuer die Kollision erstellen
             squareCollision.Width = circle.Width + (appleSize - 1);
             squareCollision.Height = circle.Height + (appleSize - 1);
             // Farbe setzen
             filling = new SolidColorBrush(Colors.Aqua);
-            //filling.Opacity = 0;
+            filling.Opacity = 0;
             squareCollision.Fill = filling;
             Canvas.SetLeft(squareCollision, Canvas.GetLeft(circle) - ((appleSize - 1) / 2));
             Canvas.SetTop(squareCollision, Canvas.GetTop(circle) - ((appleSize - 1) / 2));
@@ -82,20 +82,6 @@ namespace Snake
             // hinzufuegen
             myCanvas.Children.Add(squareCollision);
             myCanvas.Children.Add(circle);
-
-            HitTestResult coll = VisualTreeHelper.HitTest(tempPlayground, circleCenter);
-            if (coll != null)
-            {
-                string name = ((Shape)coll.VisualHit).Name;
-
-                if (name == "Hitbox" || name == "Barrier" || name == "Snake")
-                {
-                    MessageBox.Show(coll.VisualHit.ToString());
-                    RemoveApple(tempPlayground);
-                    ShowApple(tempPlayground, pillarWidth);
-                }
-            }
-
         }
 
 
@@ -106,6 +92,7 @@ namespace Snake
             myCanvas.Children.Remove(circle);
         }
 
+        // Liefere Position des Apfels
         public Point GetPosition()
         {
             return circleCenter;

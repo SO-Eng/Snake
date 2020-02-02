@@ -18,6 +18,8 @@ namespace Snake
         // die Groesse
         int barrierSize;
 
+        private Point squareCenter;
+
         private Canvas tempPlayground;
 
         #endregion
@@ -79,7 +81,7 @@ namespace Snake
             myCanvas.Children.Add(barrierCollision);
 
             // Kreismittelpunkt
-            Point squareCenter = new Point(topX + (barrierCollision.Height / 2), topY + (barrierCollision.Width / 2));
+            squareCenter = new Point(topX + (barrierCollision.Height / 2), topY + (barrierCollision.Width / 2));
 
             HitTestResult coll = VisualTreeHelper.HitTest(myCanvas, squareCenter);
             if (coll != null)
@@ -91,10 +93,16 @@ namespace Snake
 
         }
 
-        // den Apfel entfernen
+        // die Barriere entfernen
         public void RemoveBarrier(Canvas myCanvas)
         {
             myCanvas.Children.Remove(barrierCollision);
+        }
+
+        // liefere Position der Barrieren
+        public Point GetPosition()
+        {
+            return squareCenter;
         }
 
         #endregion

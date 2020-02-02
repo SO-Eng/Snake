@@ -36,13 +36,16 @@ namespace Snake
 
         // Doppelte Geschwindigkeitsabfrage
         bool speedUp = false;
+        int barrierSize;
 
         // Liste fuer die Schlange
         List<SnakeParts> snake;
+        List<Point> barriers = new List<Point>();
 
         // Timer fuer die Schlangenbewegung
         DispatcherTimer timerSnake;
         DispatcherTimer timerGametime;
+        DispatcherTimer timerCollsion;
 
         // Klasse Apples bekannt machen
         Apples myApple;
@@ -78,6 +81,7 @@ namespace Snake
 
             pillarWidth = 20;
             speedSnake = 500;
+            barrierSize = 35;
 
             // Liste erzeugen
             snake = new List<SnakeParts>();
@@ -91,6 +95,11 @@ namespace Snake
             timerGametime = new DispatcherTimer();
             timerGametime.Interval = TimeSpan.FromMilliseconds(1000);
             timerGametime.Tick += new EventHandler(Timer_Playtime);
+
+            // Timer fuer die Kollisionsabfrage
+            timerCollsion = new DispatcherTimer();
+            timerCollsion.Interval = TimeSpan.FromMilliseconds(100);
+            timerCollsion.Tick += new EventHandler(Timer_Collision);
 
             // Spiel zu beginn anhalten
             gameBreak = true;
@@ -107,6 +116,30 @@ namespace Snake
 
             gamePoints = new Score();
             
+        }
+
+
+        // Kollisionspruefung des Apfels mit den Hindernissen
+        private void Timer_Collision(object sender, EventArgs e)
+        {
+            for (int i = 0; i < barriers.Count; i++)
+            {
+                if (((myApple.GetPosition().X >= (barriers[i].X - barrierSize) && myApple.GetPosition().X <= (barriers[i].X + barrierSize))) && (((myApple.GetPosition().Y >= (barriers[i].Y - barrierSize) && myApple.GetPosition().Y <= (barriers[i].Y + barrierSize)))))
+                {
+                    myApple.RemoveApple(playground);
+                    myApple.ShowApple(playground, pillarWidth);
+                }
+            }
+            for (int i = 0; i < snake.Count; i++)
+            {
+                if (((myApple.GetPosition().X >= (snake[i].GetPosition().X - 20) && myApple.GetPosition().X <= (snake[i].GetPosition().X + 20))) && (((myApple.GetPosition().Y >= (snake[i].GetPosition().Y - 20) && myApple.GetPosition().Y <= (snake[i].GetPosition().Y + 20)))))
+                {
+                    myApple.RemoveApple(playground);
+                    myApple.ShowApple(playground, pillarWidth);
+                }
+            }
+            // Apfel sichtbar machen
+            myApple.circle.Opacity = 1;
         }
 
 
@@ -149,9 +182,10 @@ namespace Snake
             gameStarted = true;
             gamePoints.LoeschePunkte();
             ProgressBarSpeed.Value = 0;
-            ProgressBarLife.Value = 3;
+            ProgressBarLife.Value = 0;
             // Liste leeren
             snake.Clear();
+            barriers.Clear();
             // Spielfeld leeren
             playground.Children.Clear();
 
@@ -161,7 +195,6 @@ namespace Snake
             showPoints.Content = points;
             showTime.Content = time;
 
-            NextLevel(0);
             //DrawPlayground();
 
             myApple = new Apples(Colors.Green, 25);
@@ -172,6 +205,7 @@ namespace Snake
             MenuAvarage.IsEnabled = false;
             MenuHeavy.IsEnabled = false;
 
+            NextLevel(0);
         }
 
 
@@ -358,26 +392,6 @@ namespace Snake
         }
 
 
-        private void GameNewGame_Click(object sender, RoutedEventArgs e)
-        {
-            if (!gameBreak)
-            {
-                GameBreak();
-                // Dialog amzeigen
-                NewGame();
-                // und weiter spielen
-                GameBreak();
-            }
-            // wenn kein Spiel laeuft, starten wir ein neues Spiel, wenn Ja geclickt wurde
-            else
-            {
-                if (NewGame())
-                {
-                    GameBreak();
-                }
-            }
-        }
-
         // Spiel pausieren
         void GameBreak()
         {
@@ -387,6 +401,7 @@ namespace Snake
                 // alle Timer anhalten
                 timerGametime.Stop();
                 timerSnake.Stop();
+                timerCollsion.Stop();
 
                 // die Markierung im Menue einschalten
                 GameBreakSwitch.IsChecked = true;
@@ -405,6 +420,7 @@ namespace Snake
                 // alle Timer weider starten
                 timerGametime.Start();
                 timerSnake.Start();
+                timerCollsion.Start();
 
                 // die Markierung
                 GameBreakSwitch.IsChecked = false;
@@ -590,8 +606,9 @@ namespace Snake
             AddSnake();
             for (int i = 0; i < difficulty; i++)
             {
-                myBarrier = new Barrier(Colors.BlueViolet, 35);
+                myBarrier = new Barrier(Colors.BlueViolet, barrierSize);
                 myBarrier.ShowBarrier(playground, pillarWidth);
+                barriers.Add(myBarrier.GetPosition());
             }
         }
 
@@ -607,7 +624,7 @@ namespace Snake
             GameBreak(); 
             for (int i = 0; i < difficulty; i++)
             {
-                myBarrier = new Barrier(Colors.BlueViolet, 35);
+                myBarrier = new Barrier(Colors.BlueViolet, barrierSize);
                 myBarrier.ShowBarrier(playground, pillarWidth);
             }
             myApple.ShowApple(playground,pillarWidth);

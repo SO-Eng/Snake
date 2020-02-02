@@ -33,6 +33,7 @@ namespace Snake
         // Geschwindigkeit der Schlange
         int speedSnake;
         int oldSpeedSnake;
+
         // Doppelte Geschwindigkeitsabfrage
         bool speedUp = false;
 
@@ -56,6 +57,9 @@ namespace Snake
         // Commands
         public static RoutedCommand BreakKey { get; } = new RoutedCommand();
         public static RoutedCommand NewGameKey { get; } = new RoutedCommand();
+
+        public Color BorderColor;
+        private int _counterLevel;
 
         #endregion
 
@@ -98,6 +102,8 @@ namespace Snake
             addPoints = 10;
 
             gamePoints = new Score();
+
+            NextLevel(0);
         }
 
 
@@ -149,15 +155,10 @@ namespace Snake
             showPoints.Content = points;
             showTime.Content = time;
 
-            DrawPlayground();
+            NextLevel(0);
+            //DrawPlayground();
 
-            // den Schlangenkopf erzeugen und positionieren
-            SnakeHead mySnakeHead = new SnakeHead(new Point(playground.ActualWidth / 2, playground.ActualHeight / 2), Colors.Red);
-            // in die Liste setzen
-            snake.Add(mySnakeHead);
-
-
-            myApple = new Apples(Colors.Green, 20);
+            myApple = new Apples(Colors.Green, 25);
             myApple.ShowApple(playground, pillarWidth);
 
             // Einstellungen deaktivieren
@@ -178,7 +179,7 @@ namespace Snake
             Canvas.SetTop(pillar, position.Y);
             pillar.Width = width;
             pillar.Height = height;
-            SolidColorBrush filling = new SolidColorBrush(Colors.Red);
+            SolidColorBrush filling = new SolidColorBrush(BorderColor);
             pillar.Fill = filling;
             // und hinzufuegen
             playground.Children.Add(pillar);
@@ -186,7 +187,7 @@ namespace Snake
 
 
         // zum erstellen der Begrenzung
-        void DrawPlayground()
+        internal void DrawPlayground()
         {
             // der Balken oben
             DrawRectangles(new Point(0, 0), playground.ActualWidth, pillarWidth);
@@ -247,13 +248,17 @@ namespace Snake
                     {
                         ProgressBarSpeed.Value += 1;
                     }
+                    if (points >= 1000)
+                    {
+                        NextLevel(_counterLevel);
+                    }
                     // einen teil hinten in der Schlange anhaengen
                     SnakeParts sPart = new SnakeParts(new Point(snake[snake.Count - 1].GetOldPosition().X, snake[snake.Count - 1].GetOldPosition().Y + snake[snake.Count - 1].GetSize()), Colors.Black);
                     snake.Add(sPart);
                     // den alten Apfel loeschen
                     myApple.RemoveApple(playground);
                     // einen neuen Apfel erzeugen
-                    myApple = new Apples(Colors.Green, 20);
+                    myApple = new Apples(Colors.Green, 25);
                     myApple.ShowApple(playground, pillarWidth);
                 }
             }
@@ -393,11 +398,6 @@ namespace Snake
             }
         }
 
-        private void GameBreakSwitch_Click(object sender, RoutedEventArgs e)
-        {
-            GameBreak();
-        }
-
 
         // Spiel beenden
         void EndGame()
@@ -408,9 +408,8 @@ namespace Snake
             MessageBox.Show("Schade", "Game Over!", MessageBoxButton.OK, MessageBoxImage.Information);
 
             // reicht es fuer einen neuen eintrg in der Betsenliste?
-            if (gamePoints.NeuerEintrag(this) == true)
+            if (gamePoints.NeuerEintrag(this))
             {
-                gamePoints.NeuerEintrag(this);
             }
             // Abfrage ob ein neues Spiel gestartet werden soll
             if (NewGame())
@@ -536,7 +535,62 @@ namespace Snake
             }
         }
 
+        // Schlange erzeugen (nur Kopf)
+        private void AddSnake()
+        {
+            // den Schlangenkopf erzeugen und positionieren
+            SnakeHead mySnakeHead = new SnakeHead(new Point(playground.ActualWidth / 2, playground.ActualHeight / 2), Colors.Red);
+            // in die Liste setzen
+            snake.Add(mySnakeHead);
 
+        }
+
+
+        // Levelmanager-Methoden
+        public void NextLevel(int level)
+        {
+            _counterLevel = level;
+            _counterLevel++;
+            switch (_counterLevel)
+            {
+                case 1:
+                    FirstLevel();
+                    break;
+                case 2:
+                    SecondLevel();
+                    break;
+            }
+        }
+
+
+        private void FirstLevel()
+        {
+            myGrid.Background = new SolidColorBrush(Color.FromRgb(97, 213, 122));
+            BorderColor = Colors.SaddleBrown;
+            DrawPlayground();
+            AddSnake();
+            // Hindernisse setzen
+        }
+
+        private void SecondLevel()
+        {
+            snake.Clear();
+            GameBreak();
+            playground.Children.Clear();
+            // Label mit Nachricht setzen
+            System.Threading.Thread.Sleep(3000);
+            AddSnake();
+            myGrid.Background = new SolidColorBrush(Color.FromRgb(113, 136, 220));
+            BorderColor = Color.FromRgb(106, 106, 106);
+            DrawPlayground();
+            GameBreak();
+            // Hindernisse setzen
+        }
+
+        //public Canvas GetPlayground()
+        //{
+        //    return playground;
+        //}
         #endregion
 
     }

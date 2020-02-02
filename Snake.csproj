@@ -59,6 +59,7 @@
     <Compile Include="Leaderboard.xaml.cs">
       <DependentUpon>Leaderboard.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Liste.cs" />
     <Compile Include="NameDialog.xaml.cs">
       <DependentUpon>NameDialog.xaml</DependentUpon>
     </Compile>

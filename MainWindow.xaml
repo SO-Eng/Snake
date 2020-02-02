@@ -14,7 +14,7 @@
         <KeyBinding Command="{x:Static local:MainWindow.BreakKey}" Key="P"/>
         <KeyBinding Command="{x:Static local:MainWindow.NewGameKey}" Key="N"/>
     </Window.InputBindings>
-    <Grid Background="#FF77A66C">
+    <Grid x:Name="myGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="50"/>

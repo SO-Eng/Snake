@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -18,6 +19,7 @@ namespace Snake
         // die Groesse
         int appleSize;
 
+        private Canvas tempPlayground;
 
         #endregion
 
@@ -42,6 +44,7 @@ namespace Snake
         // den Apfel anzeigen
         public void ShowApple(Canvas myCanvas, int pillarWidth)
         {
+            tempPlayground = myCanvas;
             // den Zufallsgenerator initialisieren
             Random rnd = new Random();
             // das Minimum ist die Balkenbreite
@@ -70,9 +73,23 @@ namespace Snake
             Canvas.SetLeft(squareCollision, Canvas.GetLeft(circle) - ((appleSize - 1) / 2));
             Canvas.SetTop(squareCollision, Canvas.GetTop(circle) - ((appleSize - 1) / 2));
 
-            // hizufuegen
+            double topX = Canvas.GetTop(circle);
+            double topY = Canvas.GetLeft(circle);
+
+            // Kreismittelpunkt
+            Point circleCenter = new Point(topX + (circle.Height / 2), topY + (circle.Width / 2));
+
+            // hinzufuegen
             myCanvas.Children.Add(squareCollision);
             myCanvas.Children.Add(circle);
+
+            HitTestResult coll = VisualTreeHelper.HitTest(myCanvas, circleCenter);
+            if (coll != null)
+            {
+                MessageBox.Show("Getroffen!", "Apfel", MessageBoxButton.OK, MessageBoxImage.Warning);
+                RemoveApple(tempPlayground);
+                ShowApple(tempPlayground, pillarWidth);
+            }
         }
 
 

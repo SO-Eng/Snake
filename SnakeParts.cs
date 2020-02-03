@@ -10,7 +10,7 @@ namespace Snake
         #region Fields
         // die Position
         //protected Point _position;
-        protected Point position;
+        public Point position;
 
 
         // die alte Position

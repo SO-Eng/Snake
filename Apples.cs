@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace Snake
@@ -14,13 +16,18 @@ namespace Snake
         // die Farbe
         Color color;
         // die Form
-        public Ellipse circle;
         Rectangle squareCollision;
+        // das Bild
+        Image apple;
+
         // die Groesse
         int appleSize;
-        private bool collision = false;
 
         private Point circleCenter;
+
+        // Listen fuer die Kollisionsabfragen
+        static List<Point> barrierPositions = new List<Point>();
+        static List<Point> snakePartsPositions = new List<Point>();
 
         #endregion
 
@@ -34,10 +41,11 @@ namespace Snake
             // die Groesse setzen
             this.appleSize = appleSize;
             // einen neuen Kreis erzeugen
-            circle = new Ellipse();
-            circle.Name = "Apple";
             squareCollision = new Rectangle();
-            squareCollision.Name = "Collision";
+            squareCollision.Name = "Apple";
+
+            apple = new Image();
+            apple.Source = new BitmapImage(new Uri("pixels/apple_pxl.png", UriKind.Relative));
         }
 
         
@@ -52,36 +60,64 @@ namespace Snake
             int maxX = (int)myCanvas.ActualWidth - pillarWidth - appleSize;
             int maxY = (int)myCanvas.ActualHeight - pillarWidth - appleSize;
             // positionieren
-            Canvas.SetLeft(circle, rnd.Next(min, maxX));
-            Canvas.SetTop(circle, rnd.Next(min, maxY));
+            Canvas.SetLeft(apple, rnd.Next(min, maxX));
+            Canvas.SetTop(apple, rnd.Next(min, maxY));
 
             // die Groesse setzen
-            circle.Width = appleSize;
-            circle.Height = appleSize;
-            // Farben setzen
-            SolidColorBrush filling = new SolidColorBrush(color);
-            circle.Fill = filling;
-            circle.Opacity = 0;
+            apple.Width = appleSize;
+            apple.Height = appleSize;
+            // Apfel unsichtbar machen, bis endgueltige Position gesetzt
+            apple.Opacity = 0;
 
             // den Dummy fuer die Kollision erstellen
-            squareCollision.Width = circle.Width + (appleSize - 1);
-            squareCollision.Height = circle.Height + (appleSize - 1);
+            squareCollision.Width = apple.Width + (appleSize - 1);
+            squareCollision.Height = apple.Height + (appleSize - 1);
             // Farbe setzen
+            SolidColorBrush filling = new SolidColorBrush(color);
             filling = new SolidColorBrush(Colors.Aqua);
             filling.Opacity = 0;
             squareCollision.Fill = filling;
-            Canvas.SetLeft(squareCollision, Canvas.GetLeft(circle) - ((appleSize - 1) / 2));
-            Canvas.SetTop(squareCollision, Canvas.GetTop(circle) - ((appleSize - 1) / 2));
+            Canvas.SetLeft(squareCollision, Canvas.GetLeft(apple) - ((appleSize - 1) / 2));
+            Canvas.SetTop(squareCollision, Canvas.GetTop(apple) - ((appleSize - 1) / 2));
 
             double topX = Canvas.GetTop(squareCollision);
             double topY = Canvas.GetLeft(squareCollision);
 
-            // Kreismittelpunkt
+            // Kreismittelpunkt ermitteln
             circleCenter = new Point(topX + (squareCollision.Height / 2), topY + (squareCollision.Width / 2));
 
             // hinzufuegen
+            myCanvas.Children.Add(apple);
             myCanvas.Children.Add(squareCollision);
-            myCanvas.Children.Add(circle);
+
+            // Auf Kollsion im Spielfeld pruefen
+            ProofCollision(myCanvas, pillarWidth);
+        }
+
+
+        // Methode um eine Kollision des Apfels mit den Elementen im Spielfeld zu ueberpruefen
+        private void ProofCollision(Canvas myCanvas, int pillarWidth)
+        {
+            for (int i = 0; i < barrierPositions.Count; i++)
+            {
+                if (((circleCenter.X >= (barrierPositions[i].X - 35) && circleCenter.X <= (barrierPositions[i].X + 35))) && (((circleCenter.Y >= (barrierPositions[i].Y - 35) && circleCenter.Y <= (barrierPositions[i].Y + 35)))))
+                {
+                    RemoveApple(myCanvas);
+                    ShowApple(myCanvas, pillarWidth);
+                    return;
+                }
+            }
+            for (int i = 0; i < snakePartsPositions.Count; i++)
+            {
+                if (((circleCenter.X >= (snakePartsPositions[i].X - 25) && circleCenter.X <= (snakePartsPositions[i].X + 25))) && (((circleCenter.Y >= (snakePartsPositions[i].Y - 25) && circleCenter.Y <= (snakePartsPositions[i].Y + 25)))))
+                {
+                    RemoveApple(myCanvas);
+                    ShowApple(myCanvas, pillarWidth);
+                    return;
+                }
+            }
+            // Apfel sichtbar machen
+            apple.Opacity = 1;
         }
 
 
@@ -89,15 +125,34 @@ namespace Snake
         public void RemoveApple(Canvas myCanvas)
         {
             myCanvas.Children.Remove(squareCollision);
-            myCanvas.Children.Remove(circle);
+            myCanvas.Children.Remove(apple);
         }
 
-        // Liefere Position des Apfels
-        public Point GetPosition()
+
+        // Methode um die Positionen der Hindernisse in die Liste einzutragen
+        public static void SetBarrierPosition(Point barrierPos)
         {
-            return circleCenter;
+            barrierPositions.Add(barrierPos);
         }
 
+        // zum leeren der Liste
+        public static void ClearBarrierList()
+        {
+            barrierPositions.Clear();
+        }
+
+
+        // Methode um die Positionen der Schlangenteile in die Liste einzutragen
+        public static void SetSnakePartsPosition(Point snakePartPos)
+        {
+            snakePartsPositions.Add(snakePartPos);
+        }
+
+        // zum leeren der Liste
+        public static void ClearSnakePartsList()
+        {
+            snakePartsPositions.Clear();
+        }
         #endregion
     }
 }

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Remoting.Activation;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace Snake
@@ -13,7 +15,6 @@ namespace Snake
         // die Farbe
         Color color;
         // die Form
-        Rectangle barrierCollision;
         Rectangle barrierHitbox;
         // die Groesse
         int barrierSize;
@@ -21,6 +22,8 @@ namespace Snake
         private Point squareCenter;
 
         private Canvas tempPlayground;
+        private Image barrierPic;
+        string[] barrierPixels = { "pixels/tree_pxl.png", "pixels/brick_pxl.png", };
 
         #endregion
 
@@ -34,14 +37,14 @@ namespace Snake
             // die Groesse setzen
             this.barrierSize = barrierSize;
             // einen neuen Kreis erzeugen
-            barrierCollision = new Rectangle();
-            barrierCollision.Name = "Barrier";
             barrierHitbox = new Rectangle();
             barrierHitbox.Name = "Hitbox";
+
+            barrierPic = new Image();
         }
 
         // den Apfel anzeigen
-        public void ShowBarrier(Canvas myCanvas, int pillarWidth)
+        public void ShowBarrier(Canvas myCanvas, int pillarWidth, int level)
         {
             tempPlayground = myCanvas;
             // den Zufallsgenerator initialisieren
@@ -52,43 +55,44 @@ namespace Snake
             int maxX = (int)myCanvas.ActualWidth - pillarWidth - barrierSize;
             int maxY = (int)myCanvas.ActualHeight - pillarWidth - barrierSize;
             // positionieren
-            Canvas.SetLeft(barrierCollision, rnd.Next(min, maxX));
-            Canvas.SetTop(barrierCollision, rnd.Next(min, maxY));
+            Canvas.SetLeft(barrierPic, rnd.Next(min, maxX));
+            Canvas.SetTop(barrierPic, rnd.Next(min, maxY));
 
             // die Groesse setzen
-            barrierCollision.Width = barrierSize;
-            barrierCollision.Height = barrierSize;
+            barrierPic.Width = barrierSize;
+            barrierPic.Height = barrierSize;
+            barrierPic.Source = new BitmapImage(new Uri(barrierPixels[level], UriKind.Relative));
             // Farben setzen
             SolidColorBrush filling = new SolidColorBrush(color);
-            barrierCollision.Fill = filling;
 
             // den Dummy fuer die Kollision erstellen
-            barrierHitbox.Width = barrierCollision.Width + (barrierSize - 1);
-            barrierHitbox.Height = barrierCollision.Height + (barrierSize - 1);
+            barrierHitbox.Width = barrierSize;
+            barrierHitbox.Height = barrierSize;
             // Farbe setzen
             filling = new SolidColorBrush(Colors.DarkRed);
             //filling.Opacity = 0;
             barrierHitbox.Fill = filling;
-            Canvas.SetLeft(barrierHitbox, Canvas.GetLeft(barrierCollision) - ((barrierSize - 1) / 2));
-            Canvas.SetTop(barrierHitbox, Canvas.GetTop(barrierCollision) - ((barrierSize - 1) / 2));
+            barrierHitbox.Opacity = 0.1;
+            Canvas.SetTop(barrierHitbox, Canvas.GetTop(barrierPic));
+            Canvas.SetLeft(barrierHitbox, Canvas.GetLeft(barrierPic));
 
 
-            double topX = Canvas.GetTop(barrierCollision);
-            double topY = Canvas.GetLeft(barrierCollision);
+            double topX = Canvas.GetTop(barrierPic);
+            double topY = Canvas.GetLeft(barrierPic);
 
             // hinzufuegen
+            myCanvas.Children.Add(barrierPic);
             myCanvas.Children.Add(barrierHitbox);
-            myCanvas.Children.Add(barrierCollision);
 
             // Kreismittelpunkt
-            squareCenter = new Point(topX + (barrierCollision.Height / 2), topY + (barrierCollision.Width / 2));
+            squareCenter = new Point(topX + (barrierPic.Height / 2), topY + (barrierPic.Width / 2));
 
             HitTestResult coll = VisualTreeHelper.HitTest(myCanvas, squareCenter);
             if (coll != null)
             {
                 //MessageBox.Show(coll.VisualHit.ToString());
                 RemoveBarrier(tempPlayground);
-                ShowBarrier(tempPlayground, pillarWidth);
+                ShowBarrier(tempPlayground, pillarWidth, level);
             }
 
         }
@@ -96,15 +100,15 @@ namespace Snake
         // die Barriere entfernen
         public void RemoveBarrier(Canvas myCanvas)
         {
-            myCanvas.Children.Remove(barrierCollision);
+            myCanvas.Children.Remove(barrierPic);
+            myCanvas.Children.Remove(barrierHitbox);
         }
 
-        // liefere Position der Barrieren
+        // liefere Position der Hindernisse
         public Point GetPosition()
         {
             return squareCenter;
         }
-
         #endregion
     }
 }

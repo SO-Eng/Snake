@@ -117,5 +117,12 @@
   <ItemGroup>
     <SplashScreen Include="splashscreen\snake.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="pixels\brick_pxl.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="pixels\apple_pxl.png" />
+    <Resource Include="pixels\tree_pxl.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

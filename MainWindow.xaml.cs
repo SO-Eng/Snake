@@ -1,16 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Media;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
@@ -37,6 +31,7 @@ namespace Snake
         // Doppelte Geschwindigkeitsabfrage
         bool speedUp = false;
         int barrierSize;
+        int damageCount;
 
         // Liste fuer die Schlange
         List<SnakeParts> snake;
@@ -53,6 +48,7 @@ namespace Snake
         // Spiel pausiert?
         bool gameBreak;
         bool gameStarted;
+        bool damageDone;
 
         // Klasse Score instanzieren
         Score gamePoints;
@@ -61,11 +57,15 @@ namespace Snake
         public static RoutedCommand BreakKey { get; } = new RoutedCommand();
         public static RoutedCommand NewGameKey { get; } = new RoutedCommand();
 
+        // Levelsteuerung
         public Color BorderColor;
         private int _counterLevel;
-
         // 10 = leicht; 5 = mittel; 2 = schwer
         private int difficulty;
+
+
+        // Soundplayer
+        private SoundPlayer sound;
         #endregion
 
 
@@ -97,7 +97,7 @@ namespace Snake
 
             // Timer fuer die Kollisionsabfrage
             timerLoseLife = new DispatcherTimer();
-            timerLoseLife.Interval = TimeSpan.FromMilliseconds(250);
+            timerLoseLife.Interval = TimeSpan.FromMilliseconds(300);
             timerLoseLife.Tick += new EventHandler(Timer_LoseLife);
 
             // Spiel zu beginn anhalten
@@ -109,20 +109,47 @@ namespace Snake
             MenuAvarage.IsEnabled = true;
             MenuHeavy.IsEnabled = true;
 
-            // Mittel
+            // Schwierigkeitsgrad Mittel
             addPoints = 10;
             difficulty = 6;
 
+            // Bestenliste (Klasse)
             gamePoints = new Score();
             ProgressBarLife.Value = 3;
-
         }
 
 
         // Kollisionspruefung des Apfels mit den Hindernissen
         private void Timer_LoseLife(object sender, EventArgs e)
         {
-            // Methode fuer das blinken der Schlange nach dem sie Schaden bekommen hat
+            for (int i = 0; i < snake.Count; i++)
+            {
+                if (!damageDone)
+                {
+                    snake[i].square.Opacity = 0.3;
+                }
+
+                if (damageDone)
+                {
+                    snake[i].square.Opacity = 1;
+                }
+            }
+
+            damageDone = !damageDone;
+            damageCount++;
+            if (damageCount == 6)
+            {
+                timerLoseLife.Stop();
+                damageCount = 0;
+                // Sicherheit, wenn 2 "ticks" hintereinander schaden verusacht werden, bleibt schlange sonst durchsichtig
+                if (snake[0].square.Opacity == 0.3)
+                {
+                    for (int i = 0; i < snake.Count; i++)
+                    {
+                        snake[i].square.Opacity = 1;
+                    }
+                }
+            }
         }
 
 
@@ -243,7 +270,6 @@ namespace Snake
             {
                 snake[index].SetPosition(snake[index - 1].GetOldPosition());
                 snake[index].Draw(playground);
-                //Apples.SetSnakePartsPosition(snake[index].position);
             }
             // Kollision pruefen
             ProofCollision();
@@ -261,6 +287,8 @@ namespace Snake
                 // was haben wir getroffen?
                 if (name == "Border")
                 {
+                    sound = new SoundPlayer(Properties.Resources.gameOver);
+                    sound.Play();
                     EndGame();
                 }
 
@@ -269,9 +297,15 @@ namespace Snake
                     ProgressBarLife.Value -= 1;
                     if (ProgressBarLife.Value <= 0)
                     {
+                        sound = new SoundPlayer(Properties.Resources.gameOver);
+                        sound.Play();
                         EndGame();
                     }
-                    //timerLoseLife.Start();
+                    damageCount = 0;
+                    damageDone = false;
+                    timerLoseLife.Start();
+                    sound = new SoundPlayer(Properties.Resources.damage);
+                    sound.Play();
                     return;
                 }
                 if (name == "Apple")
@@ -284,6 +318,8 @@ namespace Snake
                     points = gamePoints.VeraenderePunkte(addPoints);
                     showPoints.Content = points;
                     ProgressBarLife.Value += 0.1;
+                    sound = new SoundPlayer(Properties.Resources.bite);
+                    sound.Play();
                     // Geschwindigkeit der Schlange erhoehen, wenn nicht das Maximum schon erreicht ist
                     if (points % 50 == 0 && speedSnake > 100)
                     {
@@ -296,6 +332,8 @@ namespace Snake
                     }
                     if (points % 100 == 0)
                     {
+                        sound = new SoundPlayer(Properties.Resources.speedPlusOne);
+                        sound.Play();
                         ProgressBarSpeed.Value += 1;
                     }
                     // einen teil hinten in der Schlange anhaengen
@@ -309,6 +347,8 @@ namespace Snake
                     if (points == 400)
                     {
                         GameBreak();
+                        sound = new SoundPlayer(Properties.Resources.nextLevel);
+                        sound.Play();
                         MessageBox.Show("Glückwunsch");
                         NextLevel(_counterLevel);
                     }
@@ -359,6 +399,8 @@ namespace Snake
         {
             if (ProgressBarSpeed.Value > 0 && !speedUp)
             {
+                sound = new SoundPlayer(Properties.Resources.speedUp);
+                sound.Play();
                 oldSpeedSnake = speedSnake;
                 speedSnake /= 2;
                 timerSnake.Interval = TimeSpan.FromMilliseconds(speedSnake);

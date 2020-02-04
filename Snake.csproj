@@ -60,6 +60,7 @@
     <Compile Include="Leaderboard.xaml.cs">
       <DependentUpon>Leaderboard.xaml</DependentUpon>
     </Compile>
+    <Compile Include="LevelManager.cs" />
     <Compile Include="Liste.cs" />
     <Compile Include="NameDialog.xaml.cs">
       <DependentUpon>NameDialog.xaml</DependentUpon>
@@ -115,14 +116,35 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <SplashScreen Include="splashscreen\snake.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="pixels\brick_pxl.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="pixels\apple_pxl.png" />
     <Resource Include="pixels\tree_pxl.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <SplashScreen Include="splashscreen\Snake_Logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\gameOver.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\music.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\nextLevel.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\speedPlusOne.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\speedUp.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\bite.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\damage.wav" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

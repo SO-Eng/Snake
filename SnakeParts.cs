@@ -19,7 +19,7 @@ namespace Snake
         // die Farbe
         protected Color color;
         // die Form
-        protected Rectangle square;
+        internal Rectangle square;
 
         // die Groesse
         protected int size;

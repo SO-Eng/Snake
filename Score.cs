@@ -70,8 +70,6 @@ namespace Snake
                 Array.Sort(bestenliste);
                 SchreibePunkte();
 
-                // Betsenliste anzeigen
-                ListeAusgeben(window);
                 return true;
             }
             else

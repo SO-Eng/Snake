@@ -32,10 +32,8 @@ namespace Snake
 
         #region Methods
         // der Konstruktor zum etzen der Farbe und der Groesse und des Spielfeldes
-        public Apples(Color color, int appleSize)
+        public Apples(int appleSize)
         {
-            // Farbe setzen
-            this.color = color;
             // die Groesse setzen
             this.appleSize = appleSize;
             // einen neuen Kreis erzeugen

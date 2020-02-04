@@ -21,17 +21,15 @@ namespace Snake
 
         private Canvas tempPlayground;
         private Image barrierPic;
-        string[] barrierPixels = { "pixels/tree_pxl.png", "pixels/brick_pxl.png", };
+        string[] barrierPixels = { "pixels/tree_pxl.png", "pixels/brick_pxl.png", "pixels/cactus_pxl.png", };
 
         #endregion
 
 
         #region Methods
 
-        public Barrier(Color color, int barrierSize)
+        public Barrier(int barrierSize)
         {
-            // Farbe setzen
-            this.color = color;
             // die Groesse setzen
             this.barrierSize = barrierSize;
             // einen neuen Kreis erzeugen

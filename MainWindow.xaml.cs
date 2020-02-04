@@ -32,9 +32,10 @@ namespace Snake
         bool speedUp = false;
         int barrierSize;
         int damageCount;
+        int appleSize = 25;
 
         // Liste fuer die Schlange
-        List<SnakeParts> snake;
+        internal List<SnakeParts> snake;
 
         // Timer fuer die Schlangenbewegung
         DispatcherTimer timerSnake;
@@ -47,8 +48,15 @@ namespace Snake
 
         // Spiel pausiert?
         bool gameBreak;
-        bool gameStarted;
+        internal bool gameStarted;
         bool damageDone;
+
+        public Color BorderColor;
+        // Levelsteuerung
+        int _counterLevel;
+        // 10 = leicht; 5 = mittel; 2 = schwer
+        int difficulty;
+        int levelPoints;
 
         // Klasse Score instanzieren
         Score gamePoints;
@@ -56,13 +64,6 @@ namespace Snake
         // Commands
         public static RoutedCommand BreakKey { get; } = new RoutedCommand();
         public static RoutedCommand NewGameKey { get; } = new RoutedCommand();
-
-        // Levelsteuerung
-        public Color BorderColor;
-        private int _counterLevel;
-        // 10 = leicht; 5 = mittel; 2 = schwer
-        private int difficulty;
-
 
         // Soundplayer
         private SoundPlayer sound;
@@ -79,7 +80,7 @@ namespace Snake
             InitializeComponent();
 
             pillarWidth = 20;
-            speedSnake = 500;
+            speedSnake = 1000;
             barrierSize = 35;
 
             // Liste erzeugen
@@ -108,11 +109,10 @@ namespace Snake
             MenuEasy.IsEnabled = true;
             MenuAvarage.IsEnabled = true;
             MenuHeavy.IsEnabled = true;
-
             // Schwierigkeitsgrad Mittel
             addPoints = 10;
             difficulty = 6;
-
+            _counterLevel = 1;
             // Bestenliste (Klasse)
             gamePoints = new Score();
             ProgressBarLife.Value = 3;
@@ -179,7 +179,7 @@ namespace Snake
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             DrawPlayground();
-            NextLevel(0);
+            NextLevel();
         }
 
 
@@ -187,7 +187,7 @@ namespace Snake
         private void Start()
         {
             // Geschwindigkeit setzen
-            speedSnake = 500;
+            speedSnake = 1000;
             timerSnake.Interval = TimeSpan.FromMilliseconds(speedSnake);
             gamePoints.LoeschePunkte();
             ProgressBarSpeed.Value = 0;
@@ -209,10 +209,9 @@ namespace Snake
             showPoints.Content = points;
             showTime.Content = time;
 
-            //DrawPlayground();
             gameStarted = true;
-
-            NextLevel(0);
+            _counterLevel = 1;
+            NextLevel();
 
             // Einstellungen deaktivieren
             MenuEasy.IsEnabled = false;
@@ -220,10 +219,11 @@ namespace Snake
             MenuHeavy.IsEnabled = false;
 
             // ersten Apfel setzen
-            myApple = new Apples(Colors.Green, 25);
+            myApple = new Apples(appleSize);
             myApple.ShowApple(playground, pillarWidth);
 
             ProgressBarLife.Value = 3;
+            levelPoints = 400;
         }
 
 
@@ -342,15 +342,17 @@ namespace Snake
                     // den alten Apfel loeschen
                     myApple.RemoveApple(playground);
                     // einen neuen Apfel erzeugen
-                    myApple = new Apples(Colors.Green, 25);
+                    myApple = new Apples(appleSize);
                     myApple.ShowApple(playground, pillarWidth);
-                    if (points == 400)
+                    if (points == levelPoints && _counterLevel < 3)
                     {
+                        levelPoints *= 2;
                         GameBreak();
                         sound = new SoundPlayer(Properties.Resources.nextLevel);
                         sound.Play();
-                        MessageBox.Show("Glückwunsch");
-                        NextLevel(_counterLevel);
+                        _counterLevel++;
+                        MessageBox.Show($"Glückwunsch! \nDu hast Level { _counterLevel } erreicht!", "Next Level!", MessageBoxButton.OK,MessageBoxImage.Information);
+                        NextLevel();
                     }
                 }
             }
@@ -438,7 +440,7 @@ namespace Snake
 
 
         // Spiel pausieren
-        void GameBreak()
+        internal void GameBreak()
         {
             // lauft das Spiel?
             if (!gameBreak)
@@ -446,6 +448,7 @@ namespace Snake
                 // alle Timer anhalten
                 timerGametime.Stop();
                 timerSnake.Stop();
+                timerLoseLife.Stop();
 
                 // die Markierung im Menue einschalten
                 GameBreakSwitch.IsChecked = true;
@@ -480,11 +483,12 @@ namespace Snake
             // das Spiel anhalten
             GameBreak();
             // eine Meldung anzeigen
-            MessageBox.Show("Schade", "Game Over!", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("Schade, das Spiel ist vorbei!", "Game Over!", MessageBoxButton.OK, MessageBoxImage.Information);
 
             // reicht es fuer einen neuen eintrg in der Betsenliste?
-            if (gamePoints.NeuerEintrag(this))
+            if (gamePoints.NeuerEintrag(this) == true)
             {
+                gamePoints.ListeAusgeben(this);
             }
             // Abfrage ob ein neues Spiel gestartet werden soll
             if (NewGame())
@@ -614,21 +618,17 @@ namespace Snake
         }
 
         // Schlange erzeugen (nur Kopf)
-        private void AddSnake()
+        internal void AddSnake()
         {
             // den Schlangenkopf erzeugen und positionieren
             SnakeHead mySnakeHead = new SnakeHead(new Point(playground.ActualWidth / 2, playground.ActualHeight / 2), Colors.Red);
             // in die Liste setzen
             snake.Add(mySnakeHead);
-
         }
 
-
         // Levelmanager-Methoden
-        public void NextLevel(int level)
+        public void NextLevel()
         {
-            _counterLevel = level;
-            _counterLevel++;
             switch (_counterLevel)
             {
                 case 1:
@@ -637,10 +637,13 @@ namespace Snake
                 case 2:
                     SecondLevel(1);
                     break;
+                case 3:
+                    ThirdLevel(2);
+                    break;
             }
         }
 
-
+        // LevelManager Bereich
         private void FirstLevel(int barrierPic)
         {
             myGrid.Background = new SolidColorBrush(Color.FromRgb(97, 213, 122));
@@ -662,7 +665,24 @@ namespace Snake
             myGrid.Background = new SolidColorBrush(Color.FromRgb(113, 136, 220));
             BorderColor = Color.FromRgb(106, 106, 106);
             DrawPlayground();
-            GameBreak(); 
+            GameBreak();
+            PlaceBarriers(barrierPic);
+            myApple.ShowApple(playground, pillarWidth);
+        }
+
+        private void ThirdLevel(int barrierPic)
+        {
+            System.Threading.Thread.Sleep(1000);
+            // Listen leeren
+            snake.Clear();
+            Apples.ClearBarrierList();
+            Apples.ClearSnakePartsList();
+            playground.Children.Clear();
+            AddSnake();
+            myGrid.Background = new SolidColorBrush(Color.FromRgb(231, 220, 124));
+            BorderColor = Color.FromRgb(119, 162, 215);
+            DrawPlayground();
+            GameBreak();
             PlaceBarriers(barrierPic);
             myApple.ShowApple(playground, pillarWidth);
         }
@@ -672,7 +692,7 @@ namespace Snake
         {
             for (int i = 0; i < difficulty; i++)
             {
-                myBarrier = new Barrier(Colors.BlueViolet, barrierSize);
+                myBarrier = new Barrier(barrierSize);
                 myBarrier.ShowBarrier(playground, pillarWidth, barrierPic);
                 //tempPosition = myBarrier.GetPosition();
                 if (gameStarted)
